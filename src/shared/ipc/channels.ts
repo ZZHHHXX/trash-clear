@@ -6,6 +6,9 @@ export const IPC_CHANNELS = {
     get: "settings:get",
     update: "settings:update"
   },
+  cleanup: {
+    execute: "cleanup:execute"
+  },
   window: {
     minimize: "window:minimize",
     toggleMaximize: "window:toggle-maximize",
@@ -13,6 +16,8 @@ export const IPC_CHANNELS = {
     quit: "window:quit"
   },
   scan: {
+    getTargets: "scan:get-targets",
+    revealInFolder: "scan:reveal-in-folder",
     start: "scan:start",
     progress: "scan:progress",
     resultBatch: "scan:result-batch"

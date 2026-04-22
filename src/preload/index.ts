@@ -1,6 +1,9 @@
 import { contextBridge, ipcRenderer } from "electron";
 import { IPC_CHANNELS } from "../shared/ipc/channels.js";
+import type { CleanupRequest, CleanupResponse } from "../shared/ipc/cleanup-ipc.js";
 import type {
+  GetScanTargetsResponse,
+  RevealInFolderPayload,
   ScanProgressEvent,
   ScanResultBatchEvent,
   StartScanPayload,
@@ -13,6 +16,12 @@ contextBridge.exposeInMainWorld("trashClear", {
   getSettings: () => ipcRenderer.invoke(IPC_CHANNELS.settings.get) as Promise<AppSettings>,
   updateSettings: (payload: Partial<AppSettings>) =>
     ipcRenderer.invoke(IPC_CHANNELS.settings.update, payload) as Promise<AppSettings>,
+  getScanTargets: () =>
+    ipcRenderer.invoke(IPC_CHANNELS.scan.getTargets) as Promise<GetScanTargetsResponse>,
+  executeCleanup: (payload: CleanupRequest) =>
+    ipcRenderer.invoke(IPC_CHANNELS.cleanup.execute, payload) as Promise<CleanupResponse>,
+  revealItemInFolder: (payload: RevealInFolderPayload) =>
+    ipcRenderer.invoke(IPC_CHANNELS.scan.revealInFolder, payload) as Promise<void>,
   startScan: (payload: StartScanPayload) =>
     ipcRenderer.invoke(IPC_CHANNELS.scan.start, payload) as Promise<StartScanResponse>,
   onScanProgress: (handler: (event: ScanProgressEvent) => void) => {
