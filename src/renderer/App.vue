@@ -23,6 +23,7 @@ const candidateCount = ref(0);
 const currentPath = ref("尚未开始");
 const estimatedReleasedSize = ref(0);
 const isScanning = ref(false);
+const scanFeedback = ref("");
 const cleanupModalVisible = ref(false);
 const cleanupInProgress = ref(false);
 const cleanupFeedback = ref("");
@@ -149,6 +150,7 @@ async function handleStartScan() {
     return;
   }
 
+  scanFeedback.value = "";
   resultItems.value = [];
   selectedIds.value = [];
   scannedFileCount.value = 0;
@@ -160,13 +162,19 @@ async function handleStartScan() {
   isScanning.value = true;
   scrollTop.value = 0;
 
-  const response = await window.trashClear.startScan({
-    targetPath: selectedDisk.value,
-    mode: selectedMode.value
-  });
+  try {
+    const response = await window.trashClear.startScan({
+      targetPath: selectedDisk.value,
+      mode: selectedMode.value
+    });
 
-  currentTaskId.value = response.task.id;
-  scanStatus.value = "扫描中";
+    currentTaskId.value = response.task.id;
+    scanStatus.value = "扫描中";
+  } catch (error) {
+    isScanning.value = false;
+    scanStatus.value = "扫描失败";
+    scanFeedback.value = error instanceof Error ? error.message : "扫描任务启动失败。";
+  }
 }
 
 function updateViewportMetrics() {
@@ -253,9 +261,13 @@ async function revealSelectedItemInFolder() {
     return;
   }
 
-  await window.trashClear.revealItemInFolder({
-    path: contextMenu.value.item.path
-  });
+  try {
+    await window.trashClear.revealItemInFolder({
+      path: contextMenu.value.item.path
+    });
+  } catch (error) {
+    scanFeedback.value = error instanceof Error ? error.message : "打开文件所在位置失败。";
+  }
   closeContextMenu();
 }
 
@@ -293,6 +305,10 @@ async function executeSelectedCleanup() {
     estimatedReleasedSize.value = resultItems.value
       .filter((item) => item.allowDelete)
       .reduce((total, item) => total + item.size, 0);
+
+    if (response.deletedCount > 0) {
+      scanFeedback.value = `本次清理已完成，成功移入回收站 ${response.deletedCount} 个条目。`;
+    }
   } catch (error) {
     cleanupFeedback.value = error instanceof Error ? error.message : "清理执行失败。";
   } finally {
@@ -456,6 +472,9 @@ onBeforeUnmount(() => {
           <div class="progress-track">
             <div class="progress-bar" :style="{ width: `${progressPercent}%` }"></div>
           </div>
+          <div v-if="scanFeedback" class="status-feedback">
+            {{ scanFeedback }}
+          </div>
         </div>
 
         <div class="result-section">
@@ -572,7 +591,7 @@ onBeforeUnmount(() => {
         </div>
 
         <footer class="workspace-footer">
-          <span>预计可释放空间：{{ formatBytes(estimatedReleasedSize) }}。Phase 6 将继续接入删除确认、回收站与日志链路。</span>
+          <span>预计可释放空间：{{ formatBytes(estimatedReleasedSize) }}。当前版本已具备扫描、筛选、清理、日志记录完整主链路。</span>
         </footer>
       </section>
     </div>
@@ -900,6 +919,15 @@ button:disabled {
   border-radius: inherit;
   background: linear-gradient(90deg, #3d86c6, #7fc4ff);
   transition: width 0.2s ease;
+}
+
+.status-feedback {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #eef6ff;
+  color: #2b5f90;
+  line-height: 1.6;
 }
 
 .result-section {

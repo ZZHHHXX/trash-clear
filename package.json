@@ -13,6 +13,7 @@
     "build": "npm run build:renderer && npm run build:main",
     "build:renderer": "vite build",
     "build:main": "tsc -p tsconfig.main.json",
+    "test": "tsx --test tests/unit/**/*.test.ts tests/integration/**/*.test.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.main.json",
     "lint": "eslint . --ext .ts,.tsx,.vue",
     "format": "prettier --write ."
@@ -32,6 +33,7 @@
     "eslint-plugin-vue": "^10.0.0",
     "prettier": "^3.5.3",
     "typescript": "^5.8.3",
+    "tsx": "^4.19.4",
     "vite": "^6.3.2",
     "vue-tsc": "^2.2.10",
     "wait-on": "^8.0.3"
